@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  django:
+    build: .
+    container_name: django
+    command: bash -c "python manage.py runserver 0.0.0.0:8080"
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    networks:
+      - backend
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.1
+    container_name: zookeeper
+    env_file:
+      - .env
+    networks:
+      - kafka
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.1
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    env_file:
+      - .env
+    networks:
+      - kafka
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+  kafka:
